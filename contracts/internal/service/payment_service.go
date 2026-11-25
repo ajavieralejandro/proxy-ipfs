@@ -8,6 +8,10 @@ import (
 	"my-go-proxy/internal/store"
 )
 
+var EmptyId = errors.New("Empty id")
+var EmptyAmountWei = errors.New("Empty Amount Wei")
+
+
 // PaymentResponse expone los campos de Payment más el estado calculado.
 type PaymentResponse struct {
 	model.Payment
@@ -38,23 +42,26 @@ func toResponse(p *model.Payment) PaymentResponse {
 
 // List devuelve todos los pagos con su estado calculado.
 func (s *PaymentService) List() []PaymentResponse {
-	// TODO 3: Pide los pagos con s.store.List(), arma un slice de PaymentResponse
-	// convirtiendo cada elemento con toResponse(&item) y devuélvelo.
-	out := make([]PaymentResponse, len(s.store.List()))
-	for _,payment := range(s.store.List()){
-		var response PaymentResponse = toResponse(&payment)
-		out = apend(out,response)
+	items := s.store.List()
+	out := make([]PaymentResponse, 0, len(items))
 
+	for _, payment := range items {
+		item := payment
+		response := toResponse(&item)
+		out = append(out, response)
 	}
+
 	return out
-}
+}	
 
 // GetByID busca un pago por ID y devuelve su respuesta con Status().
 func (s *PaymentService) GetByID(id string) (PaymentResponse, error) {
-	// TODO 4: Llama a s.store.GetByID(id).
-	// Si hay error, devuelve PaymentResponse{} y ese err.
-	// Si no, devuelve toResponse(p), nil.
-	return PaymentResponse{}, nil
+
+	response,error := s.store.GetByID(id)
+	if(error!=nil)
+		return PaymentResponse{}, error
+	return toResponse(response),nil
+	
 }
 
 // Create valida y registra un nuevo pago en el store.
@@ -63,5 +70,15 @@ func (s *PaymentService) Create(p model.Payment) (PaymentResponse, error) {
 	// 1) Valida que p.ID != "" y p.AmountWei != "" (si falta alguno, devuelve errors.New(...)).
 	// 2) Llama a s.store.Create(p). Si da error, devuélvelo.
 	// 3) Devuelve toResponse(created), nil.
-	return PaymentResponse{}, nil
+
+	if(p.ID == "" ){
+		return PaymentResponse{}, errors.EmptyId
+	}
+	if(p.AmountWei ==""){
+			return PaymentResponse{}, errors.EmptyAmountWei
+
+	}
+	return toResponse(&p)
+	
+
 }
